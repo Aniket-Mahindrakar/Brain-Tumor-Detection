@@ -4,10 +4,19 @@ clc;
 
 data = [];
 label = [];
+corrupt_images = [];
 for k = 1:3064
     load(strcat('..\Data\',num2str(k),'.mat'));
-    l = cjdata.label;
+    img = cjdata.image;
+    
+    
     seg_img = cjdata.tumorMask;
+    s = size(img);
+    if ((s(1) ~= 512) || (s(2) ~= 512))
+        seg_img = imresize(seg_img, 2);
+        img = imresize(img, 2);
+    end
+    l = cjdata.label;
     %figure, imshow(seg_img);title('Segmented Tumor');
 
     % Extract features using DWT
