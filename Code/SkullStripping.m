@@ -6,6 +6,9 @@ imageNo = 18;
 load(strcat('../Data/',num2str(imageNo),'.mat'));
 
 I = uint8(255 * mat2gray(cjdata.image));
+angle = 290;
+I = imrotate(I, angle);
+cjdata.tumorMask = imrotate(cjdata.tumorMask, angle);
 % Get the dimensions of the image.
 % numberOfColorBands should be = 1.
 [rows, columns, numberOfColorBands] = size(I);
