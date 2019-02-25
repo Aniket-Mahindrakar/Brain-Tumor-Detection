@@ -4,7 +4,7 @@ close all;
 seed = 100;
 rng(seed);
 
-load('..\Data\Trainset.mat');
+load('../Data/Trainset.mat');
 data = datasample(data,3064);
 label = data(:,end);
 data = data(:,1:end-1);
@@ -17,17 +17,22 @@ svmParams = templateSVM('KernelFunction','rbf', 'KernelScale', 1, ...
 %result = bayesopt(minfn,kernal_scale)
 svm_Mdl = fitcecoc(data, label, 'Learners', svmParams, 'Coding', 'onevsall');
 svm_CVMdl = crossval(svm_Mdl);
-svm_loss = kfoldLoss(svm_CVMdl)
+svm_loss = kfoldLoss(svm_CVMdl, 'LossFun', 'classiferror')
 
 %Binary Decision Tree
 tree_Mdl = fitctree(data,label);
 tree_CVMdl = crossval(tree_Mdl);
-tree_loss = kfoldLoss(tree_CVMdl)
+tree_loss = kfoldLoss(tree_CVMdl, 'LossFun', 'classiferror')
 
 %KNN
 knn_Mdl = fitcknn(data, label);
 knn_CVMdl = crossval(knn_Mdl);
-knn_loss = kfoldLoss(knn_CVMdl)
+knn_loss = kfoldLoss(knn_CVMdl, 'LossFun', 'classiferror')
+
+%Ensembles
+ens_Mdl = fitensemble(data, label, 'Subspace', 'AllPredictorCombinations', 'KNN');
+ens_CVMdl = crossval(ens_Mdl);
+ens_loss = kfoldLoss(ens_CVMdl)
 
 %{
 idx = kmedoids(data,3);
