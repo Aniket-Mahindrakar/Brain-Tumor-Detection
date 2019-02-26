@@ -2,15 +2,13 @@ clear all;
 clc;
 close all;
 
-imageNo = 2019;
+imageNo = 1823;
 load(strcat('../Data/',num2str(imageNo),'.mat'));
 
 I = uint8(255 * mat2gray(cjdata.image));
-angle = 290;
+angle = 54;
 I = imrotate(I, angle);
 cjdata.tumorMask = imrotate(cjdata.tumorMask, angle);
-
-%Skull Stripping
 % Get the dimensions of the image.
 % numberOfColorBands should be = 1.
 [rows, columns, numberOfColorBands] = size(I);
@@ -65,17 +63,24 @@ imshow(finalImage, []);
 axis on;
 title('Skull stripped Image');
 
-%Image Segmentation using Fuzzy C-Means
-data=im2double(reshape(finalImage,[],1));
-[center,member]=fcm(data,3);
-[center,cidx]=sort(center);
-member=member';
-member=member(:,cidx);
-[maxmember,label]=max(member,[],2);
-level=(max(data(label==2))+min(data(label==3)))/2;
-bw=im2bw(finalImage,level);
+finalImage = im2double(finalImage);
+data = [finalImage(:)]
+[c, U] = fcm(finalImage, 3);
 
-%se = strel('disk', 20);
-%img_open = imopen(bw, se);
-figure, subplot(1,2,1), imshowpair(I, bw), title('Segmented Image');
-subplot(1,2,2), imshowpair(I, cjdata.tumorMask), title('Original Segmented Image');
+maxU = max(U);
+index1 = find(U(1,:) == maxU);
+index2 = find(U(2,:) == maxU);
+index3 = find(U(3,:) == maxU);
+
+fcmImage(1:length(data))=0;       
+fcmImage(index1)= 1;
+fcmImage(index2)= 0.67;
+fcmImage(index3)= 0.33;
+
+imagNew = reshape(fcmImage,512,512);
+figure;imshow(imagNew,[]);
+
+%se = strel('disk', 12);
+%img_open = imopen(seg_img, se);
+%subplot(2,2,3), imshowpair(I, img_open), title('Morphological Segmented Image');
+%subplot(2,2,4), imshowpair(I, cjdata.tumorMask), title('Original Segmented Image');

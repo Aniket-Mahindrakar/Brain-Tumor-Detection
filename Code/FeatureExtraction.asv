@@ -8,17 +8,15 @@ corrupt_images = [];
 for k = 1:3064
     load(strcat('../Data/',num2str(k),'.mat'));
     img = cjdata.image;
-    img = uint8(255*mat2gray(img));
+    img = uint8(255*mat2gray(img))
     
     seg_img = cjdata.tumorMask;
-    seg_img = img.*uint8(seg_img);
-    
     s = size(img);
     if ((s(1) ~= 512) || (s(2) ~= 512))
         seg_img = imresize(seg_img, 2);
         img = imresize(img, 2);
     end
-    %seg_img = edge(seg_img, 'Roberts');
+    seg_img = edge(seg_img, 'Roberts');
     l = cjdata.label;
     %figure, imshow(seg_img);title('Segmented Tumor');
 
