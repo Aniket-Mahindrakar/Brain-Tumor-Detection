@@ -30,13 +30,10 @@ knn_CVMdl = crossval(knn_Mdl);
 knn_loss = kfoldLoss(knn_CVMdl, 'LossFun', 'classiferror')
 
 %Ensembles
-ens_Mdl = fitensemble(data, label, 'Subspace', 'AllPredictorCombinations', 'KNN');
+ens_Mdl = fitensemble(data, label, 'Bag', 100, 'Tree', 'Type', 'Classification');
 ens_CVMdl = crossval(ens_Mdl);
-ens_loss = kfoldLoss(ens_CVMdl)
 
-%{
-idx = kmedoids(data,3);
-t = AccMeasure(label, idx)
-ct = crosstab(idx, label);
-purity = sum(max(ct)))/3064
-%}
+ens_loss = kfoldLoss(ens_CVMdl,'Mode','Cumulative')
+figure, plot(ens_loss), title('Ensembles');
+xlabel('Number of Iterations');
+ylabel('Classification Loss');
