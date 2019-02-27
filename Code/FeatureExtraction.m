@@ -8,12 +8,12 @@ corrupt_images = [];
 for k = 1:3064
     load(strcat('../Data/',num2str(k),'.mat'));
     img = cjdata.image;
-    img = uint8(255*mat2gray(img));
+    seg_img = uint8(255*mat2gray(img));
     
-    seg_img = cjdata.tumorMask;
-    seg_img = img.*uint8(seg_img);
+    %seg_img = cjdata.tumorMask;
+    %seg_img = img.*uint8(seg_img);
     
-    s = size(img);
+    s = size(seg_img);
     if ((s(1) ~= 512) || (s(2) ~= 512))
         seg_img = imresize(seg_img, 2);
         img = imresize(img, 2);
