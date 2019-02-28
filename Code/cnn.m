@@ -1,6 +1,8 @@
-clear all;
-clc;
-close all;
+clear all; clc; close all;
+a=rng;
+out=randn;
+rng(a)
+out=randn;
 
 rootFolder = '../Data_img/';
 %categories = {'1', '2', '3'};
@@ -10,13 +12,21 @@ imds = imageDatastore(rootFolder, ...
     'LabelSource','foldernames'); 
 [imdsTrain,imdsValidation] = splitEachLabel(imds,0.7);
 
+imageAugmenter = imageDataAugmenter( ...
+    'RandRotation',[-20,20], ...
+    'RandXTranslation',[-3 3], ...
+    'RandYTranslation',[-3 3]);
+
+imageSize = [128 128 1];
+augimds = augmentedImageDatastore(imageSize,imdsTrain,'DataAugmentation',imageAugmenter);
+
 
 layers = [
-    imageInputLayer([512 512 1])  
+    imageInputLayer([128 128 1])
     convolution2dLayer(3,16,'Padding',1)
     batchNormalizationLayer
     reluLayer    
-    maxPooling2dLayer(2,'Stride',2) 
+    maxPooling2dLayer(2,'Stride',2)
     convolution2dLayer(3,32,'Padding',1)
     batchNormalizationLayer
     reluLayer 
@@ -24,13 +34,16 @@ layers = [
     softmaxLayer
     classificationLayer];
 
-opts = trainingOptions('sgdm', ...
-    'MaxEpochs',15, ...
+opts = trainingOptions('adam', ...
+    'InitialLearnRate',0.001, ...
+    'L2Regularization', 0.0001, ...
+    'MiniBatchSize',64, ...
+    'MaxEpochs',30, ...
     'Shuffle','every-epoch', ...
     'Plots','training-progress', ...
     'Verbose',false, ...
     'ValidationData',imdsValidation,...
-    'ValidationPatience',Inf,...
-    'ExecutionEnvironment','cpu');
+    'ValidationFrequency', 32, ...
+    'ExecutionEnvironment','gpu');
 
-net = trainNetwork(imds,layers,opts);
+net = trainNetwork(augimds,layers,opts);

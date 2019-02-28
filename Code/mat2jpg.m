@@ -17,10 +17,7 @@ for k = 1:3064
         outfile = strcat('..\Data_img\3\',num2str(k),'.jpg');
     end
     
-    s = size(img);
-    if ((s(1) ~= 512) || (s(2) ~= 512))
-        img = imresize(img, 2);
-    end
+    img = imresize(img, [128, 128]);
     
     imwrite(img, outfile);
     k
