@@ -5,45 +5,58 @@ rng(a)
 out=randn;
 
 rootFolder = '../Data_img/';
-%categories = {'1', '2', '3'};
 
 imds = imageDatastore(rootFolder, ...
     'IncludeSubfolders',true, ...
     'LabelSource','foldernames'); 
-[imdsTrain,imdsValidation] = splitEachLabel(imds,0.7);
+[imdsTrain,imdsValidation] = splitEachLabel(imds,0.6);
+[imdsValidation, imdsTest] = splitEachLabel(imdsValidation, 0.5);
 
-imageAugmenter = imageDataAugmenter( ...
-    'RandRotation',[-20,20], ...
-    'RandXTranslation',[-3 3], ...
-    'RandYTranslation',[-3 3]);
-
+pixelRange = [-4 4];
+rotationRange = [0 90];        
+imageAugmenter = imageDataAugmenter(...
+            'RandRotation',rotationRange, ...
+            'RandXReflection',true,...
+            'RandYReflection',true,...
+            'RandXTranslation',pixelRange,...
+            'RandYTranslation',pixelRange);
 imageSize = [128 128 1];
-augimds = augmentedImageDatastore(imageSize,imdsTrain,'DataAugmentation',imageAugmenter);
+datasource = augmentedImageDatastore(imageSize,imdsTrain,...
+            'DataAugmentation',imageAugmenter,...
+            'OutputSizeMode','randcrop');
+        
+optimVars = [
+    optimizableVariable('InitialLearnRate',[0.001 0.005],'Transform','log');
+    optimizableVariable('GradientDecayFactor',[0.8 0.95], 'Transform','log');
+    optimizableVariable('SquaredGradientDecayFactor',[0.85 1],'Transform','log');
+    optimizableVariable('L2Regularization',[1e-10 1e-2],'Transform','log');
+    optimizableVariable('MaxEpochs',[16 32],'Type','integer')];
+
+i = 1;
+ObjFcn = makeObjFcn(imdsTrain,imdsValidation,datasource,imageSize,i);
+BayesObject = bayesopt(ObjFcn,optimVars,...
+    'MaxObj',30,...
+    'MaxTime',8*60*60,...
+    'IsObjectiveDeterministic',false,...
+    'UseParallel',false);
 
 
-layers = [
-    imageInputLayer([128 128 1])
-    convolution2dLayer(3,16,'Padding',1)
-    batchNormalizationLayer
-    reluLayer    
-    maxPooling2dLayer(2,'Stride',2)
-    convolution2dLayer(3,32,'Padding',1)
-    batchNormalizationLayer
-    reluLayer 
-    fullyConnectedLayer(3)
-    softmaxLayer
-    classificationLayer];
+bestIdx = BayesObject.IndexOfMinimumTrace(end);
+fileName = BayesObject.UserDataTrace{bestIdx};
+savedStruct = load(fileName);
+valError = savedStruct.valError
 
-opts = trainingOptions('adam', ...
-    'InitialLearnRate',0.001, ...
-    'L2Regularization', 0.0001, ...
-    'MiniBatchSize',64, ...
-    'MaxEpochs',30, ...
-    'Shuffle','every-epoch', ...
-    'Plots','training-progress', ...
-    'Verbose',false, ...
-    'ValidationData',imdsValidation,...
-    'ValidationFrequency', 32, ...
-    'ExecutionEnvironment','gpu');
+[YPredicted,probs] = classify(savedStruct.trainedNet,imdsTest);
+YTest = imdsTest.Labels;
+testError = 1 - mean(YPredicted == YTest)
 
-net = trainNetwork(augimds,layers,opts);
+NTest = numel(YTest);
+testErrorSE = sqrt(testError*(1-testError)/NTest);
+testError95CI = [testError - 1.96*testErrorSE, testError + 1.96*testErrorSE]
+
+figure
+[cmat,classNames] = confusionmat(YTest,YPredicted);
+h = heatmap(classNames,classNames,cmat);
+xlabel('Predicted Class');
+ylabel('True Class');
+title('Confusion Matrix');

@@ -1,7 +1,7 @@
 clear all;
 clc;
 close all;
-seed = 100;
+seed = 100; 
 rng(seed);
 
 load('../Data/Trainset.mat');

@@ -3,10 +3,10 @@ clc;
 close all;
 
 for k = 1:3064
-    load(strcat('..\Data\',num2str(k),'.mat'));
+    load(strcat('../Data/',num2str(k),'.mat'));
     
     img = cjdata.image;
-    img = uint8(255 * mat2gray(img));
+    img = double(mat2gray(img));
     label = cjdata.label;
     
     if label == 1

@@ -8,14 +8,14 @@ corrupt_images = [];
 for k = 1:3064
     load(strcat('../Data/',num2str(k),'.mat'));
     img = cjdata.image;
-    seg_img = uint8(255*mat2gray(img));
+    img = uint8(255*mat2gray(img));
     
     %seg_img = cjdata.tumorMask;
     %seg_img = img.*uint8(seg_img);
     
-    s = size(seg_img);
+    s = size(img);
     if ((s(1) ~= 512) || (s(2) ~= 512))
-        seg_img = imresize(seg_img, 2);
+        img = imresize(img, 2);
         img = imresize(img, 2);
     end
     %seg_img = edge(seg_img, 'Roberts');
@@ -23,9 +23,9 @@ for k = 1:3064
     %figure, imshow(seg_img);title('Segmented Tumor');
 
     % Extract features using DWT
-    x = double(seg_img);
-    m = size(seg_img,1);
-    n = size(seg_img,2);
+    x = double(img);
+    m = size(img,1);
+    n = size(img,2);
     %signal1 = (rand(m,1));
     %winsize = floor(size(x,1));
     %winsize = int32(floor(size(x)));
@@ -35,7 +35,7 @@ for k = 1:3064
 
     %m = size(img,1);
     %signal = rand(m,1);
-    signal1 = seg_img(:,:);
+    signal1 = img(:,:);
     %Feat = getmswpfeat(signal,winsize,wininc,J,'matlab');
     %Features = getmswpfeat(signal,winsize,wininc,J,'matlab');
 
@@ -79,4 +79,4 @@ for k = 1:3064
     k
 end
 
-save('..\Data\Trainset.mat','data');
+save('../Data/Trainset.mat','data');
